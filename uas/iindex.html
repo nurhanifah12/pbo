@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Login Nature</title>
+    <style>
+        /* Mengambil font modern dari Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            /* Gambar latar belakang alam */
+            background: url('https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') no-repeat center center fixed;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Efek Glassmorphism untuk form */
+        .container {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            color: white;
+        }
+
+        h2 { margin-bottom: 20px; font-weight: 600; }
+
+        .input-group { margin-bottom: 15px; text-align: left; }
+
+        label { display: block; margin-bottom: 5px; font-size: 14px; }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            outline: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        input::placeholder { color: #ddd; }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .btn-login {
+            background-color: #2ecc71; /* Warna Hijau */
+            color: white;
+        }
+
+        .btn-login:hover { background-color: #27ae60; }
+
+        .btn-cancel {
+            background-color: white; /* Warna Putih */
+            color: #333;
+        }
+
+        .btn-cancel:hover { background-color: #f0f0f0; }
+
+        #dashboard { display: none; }
+
+        .error-msg {
+            color: #ff4d4d;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .welcome-msg { font-size: 24px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+    <div id="login-section" class="container">
+        <h2>Silahkan Login</h2>
+        <div class="input-group">
+            <label>Username</label>
+            <input type="text" id="username" placeholder="Masukkan username">
+        </div>
+        <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="password" placeholder="Masukkan password">
+        </div>
+        <div id="error-text" class="error-msg">Gagal Login! Periksa kembali akun Anda.</div>
+        
+        <div class="button-group">
+            <button class="btn-cancel" onclick="clearForm()">Cancel</button>
+            <button class="btn-login" onclick="handleLogin()">Login</button>
+        </div>
+    </div>
+
+    <div id="dashboard" class="container">
+        <div class="welcome-msg" id="greeting"></div>
+        <p>Anda berhasil masuk ke sistem.</p>
+        <div class="button-group">
+            <button class="btn-cancel" onclick="handleLogout()">Logout</button>
+        </div>
+    </div>
+
+    <script>
+        // 1. Database User dalam bentuk Object
+        const initialUsers = [
+            { username: "nur", password: "123" },
+            { username: "nadia", password: "123" },
+            { username: "nisa", password: "123" }
+        ];
+
+        // 2. Inisialisasi LocalStorage
+        function initDatabase() {
+            if (!localStorage.getItem('db_users')) {
+                localStorage.setItem('db_users', JSON.stringify(initialUsers));
+            }
+        }
+
+        // 3. Fungsi Login
+        function handleLogin() {
+            const userInp = document.getElementById('username').value;
+            const passInp = document.getElementById('password').value;
+            const errorText = document.getElementById('error-text');
+
+            // Ambil data dari LocalStorage
+            const dbUsers = JSON.parse(localStorage.getItem('db_users'));
+
+            // Validasi user
+            const foundUser = dbUsers.find(u => u.username === userInp && u.password === passInp);
+
+            if (foundUser) {
+                showDashboard(foundUser.username);
+            } else {
+                errorText.style.display = 'block';
+            }
+        }
+
+        // 4. Fungsi Tampil Dashboard
+        function showDashboard(name) {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            document.getElementById('greeting').innerText = `Hi ${name}!`;
+            document.getElementById('error-text').style.display = 'none';
+        }
+
+        // 5. Fungsi Logout & Cancel
+        function handleLogout() {
+            location.reload(); // Refresh halaman untuk balik ke login
+        }
+
+        function clearForm() {
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('error-text').style.display = 'none';
+        }
+
+        // Jalankan inisialisasi saat script dimuat
+        initDatabase();
+    </script>
+</body>
+</html>
