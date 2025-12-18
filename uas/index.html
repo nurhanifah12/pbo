@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Login LocalStorage</title>
+    <style>
+        /* CSS untuk tampilan yang menarik */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            color: #333;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        h2 { margin-bottom: 1.5rem; color: #4a4a4a; }
+
+        .input-group { margin-bottom: 1rem; text-align: left; }
+
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box; /* Penting agar padding tidak merusak lebar */
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #764ba2;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #764ba2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        button:hover { background: #5a368a; }
+
+        #error-msg {
+            color: #e74c3c;
+            margin-top: 1rem;
+            display: none;
+            font-size: 0.9rem;
+        }
+
+        /* Halaman Dashboard */
+        #dashboard { display: none; }
+
+        .welcome-box {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 10px;
+        }
+
+        .logout-btn {
+            margin-top: 20px;
+            background: #ff4757;
+        }
+        
+        .logout-btn:hover { background: #ff6b81; }
+    </style>
+</head>
+<body>
+
+    <div id="login-page" class="container">
+        <h2>Selamat Datang</h2>
+        <div class="input-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" placeholder="Masukkan username (nur/nadia/nisa)">
+        </div>
+        <button onclick="handleLogin()">Login</button>
+        <div id="error-msg">Gagal login! Username tidak ditemukan.</div>
+    </div>
+
+    <div id="dashboard" class="container">
+        <div class="welcome-box">
+            <h2 id="welcome-text">Hi User</h2>
+            <p>Anda berhasil masuk ke sistem.</p>
+            <button class="logout-btn" onclick="handleLogout()">Keluar</button>
+        </div>
+    </div>
+
+    <script>
+        // 1. Inisialisasi Database JSON di Local Storage
+        const initialUsers = [
+            { id: 1, username: "nur" },
+            { id: 2, username: "nadia" },
+            { id: 3, username: "nisa" }
+        ];
+
+        // Simpan ke localstorage jika belum ada
+        if (!localStorage.getItem('user_db')) {
+            localStorage.setItem('user_db', JSON.stringify(initialUsers));
+        }
+
+        // Fungsi Login
+        function handleLogin() {
+            const usernameInput = document.getElementById('username').value.toLowerCase().trim();
+            const errorMsg = document.getElementById('error-msg');
+            
+            // Ambil data dari localstorage
+            const users = JSON.parse(localStorage.getItem('user_db'));
+
+            // Cari user
+            const userFound = users.find(u => u.username === usernameInput);
+
+            if (userFound) {
+                // Sembunyikan pesan error jika sebelumnya ada
+                errorMsg.style.display = 'none';
+                showDashboard(userFound.username);
+            } else {
+                // Munculkan pesan gagal login
+                errorMsg.style.display = 'block';
+            }
+        }
+
+        // Fungsi Menampilkan Halaman Dashboard
+        function showDashboard(name) {
+            document.getElementById('login-page').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            document.getElementById('welcome-text').innerText = "Hi " + name.charAt(0).toUpperCase() + name.slice(1);
+        }
+
+        // Fungsi Logout
+        function handleLogout() {
+            document.getElementById('username').value = "";
+            document.getElementById('login-page').style.display = 'block';
+            document.getElementById('dashboard').style.display = 'none';
+        }
+
+        // Menjalankan login dengan menekan tombol Enter
+        document.getElementById('username').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                handleLogin();
+            }
+        });
+    </script>
+</body>
+</html>
