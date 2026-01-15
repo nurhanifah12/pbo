@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlavorEase - Menu Management System</title>
+    <style>
+        :root {
+            --primary-green: #27ae60;
+            --hover-green: #219150;
+            --white: #ffffff;
+            --glass-bg: rgba(255, 255, 255, 0.2);
+            --glass-border: rgba(255, 255, 255, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            /* Gambar latar belakang makanan & minuman yang estetik */
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), 
+                        url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Glassmorphism Container */
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 40px;
+            width: 400px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            text-align: center;
+            color: white;
+            transition: all 0.5s ease;
+        }
+
+        h2 { margin-bottom: 20px; font-weight: 600; letter-spacing: 1px; }
+
+        .input-box {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: none;
+            outline: none;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+
+        .btn-login { background-color: var(--primary-green); color: white; }
+        .btn-login:hover { background-color: var(--hover-green); transform: translateY(-2px); }
+
+        .btn-cancel { background-color: var(--white); color: #333; }
+        .btn-cancel:hover { background-color: #f2f2f2; transform: translateY(-2px); }
+
+        #error-msg { color: #ffeb3b; font-size: 13px; margin-top: 10px; font-weight: 500; }
+
+        /* Dashboard View */
+        .hidden { display: none !important; }
+        #dashboard { width: 80%; max-height: 85vh; overflow-y: auto; }
+        
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .menu-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 15px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .price { color: #2ecc71; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="login-container" class="card">
+        <h2>Taste of Heaven</h2>
+        <p style="margin-bottom: 20px; font-size: 14px;">Silakan login untuk melihat menu</p>
+        <div class="input-box">
+            <input type="text" id="username" placeholder="Username">
+        </div>
+        <div class="input-box">
+            <input type="password" id="password" placeholder="Password">
+        </div>
+        <p id="error-msg"></p>
+        <div class="button-group">
+            <button class="btn-cancel" onclick="ui.resetForm()">Cancel</button>
+            <button class="btn-login" onclick="auth.login()">Login</button>
+        </div>
+    </div>
+
+    <div id="dashboard" class="card hidden">
+        <h2 id="welcome-msg"></h2>
+        <hr style="border: 0.5px solid var(--glass-border); margin-bottom: 20px;">
+        <h3>Daftar Menu Spesial</h3>
+        <div id="menu-list" class="menu-grid">
+            </div>
+        <button class="btn-cancel" style="margin-top: 30px; width: 150px;" onclick="auth.logout()">Logout</button>
+    </div>
+
+    <script>
+        // --- KONSEP PBO (CLASS & OBJECT) ---
+
+        // 1. Class User (Blueprint data user)
+        class User {
+            constructor(username, password) {
+                this.username = username;
+                this.password = password;
+            }
+        }
+
+        // 2. Class Product (Blueprint menu makanan/minuman)
+        class Product {
+            constructor(name, price, type) {
+                this.name = name;
+                this.price = price;
+                this.type = type;
+            }
+        }
+
+        // 3. Class Database (Mengelola LocalStorage)
+        class Database {
+            constructor() {
+                this.dbKey = 'app_users';
+                this.initDB();
+            }
+
+            initDB() {
+                if (!localStorage.getItem(this.dbKey)) {
+                    // Membuat database awal dalam bentuk JSON
+                    const initialUsers = [
+                        new User('admin1', '123'),
+                        new User('admin2', '123'),
+                        new User('admin3', '123')
+                    ];
+                    localStorage.setItem(this.dbKey, JSON.stringify(initialUsers));
+                }
+            }
+
+            getUsers() {
+                return JSON.parse(localStorage.getItem(this.dbKey));
+            }
+        }
+
+        // 4. Class Auth (Sistem Keamanan)
+        class Auth {
+            constructor(db) {
+                this.db = db;
+            }
+
+            login() {
+                const userIn = document.getElementById('username').value;
+                const passIn = document.getElementById('password').value;
+                const errorDisplay = document.getElementById('error-msg');
+                
+                const users = this.db.getUsers();
+                const foundUser = users.find(u => u.username === userIn && u.password === passIn);
+
+                if (foundUser) {
+                    ui.showDashboard(foundUser.username);
+                } else {
+                    errorDisplay.innerText = "Gagal login! Username atau Password salah.";
+                }
+            }
+
+            logout() {
+                ui.showLogin();
+            }
+        }
+
+        // 5. Class UI (Mengatur Tampilan)
+        class UI {
+            constructor() {
+                this.menuItems = [
+                    new Product('Iced Matcha Latte', 'Rp 25.000', 'Drink'),
+                    new Product('Croissant Butter', 'Rp 18.000', 'Food'),
+                    new Product('Beef Wagyu Steak', 'Rp 150.000', 'Food'),
+                    new Product('Signature Espresso', 'Rp 20.000', 'Drink')
+                ];
+            }
+
+            showDashboard(username) {
+                document.getElementById('login-container').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+                document.getElementById('welcome-msg').innerText = `Hi ${username}`;
+                this.renderMenu();
+            }
+
+            showLogin() {
+                document.getElementById('login-container').classList.remove('hidden');
+                document.getElementById('dashboard').classList.add('hidden');
+                this.resetForm();
+            }
+
+            resetForm() {
+                document.getElementById('username').value = '';
+                document.getElementById('password').value = '';
+                document.getElementById('error-msg').innerText = '';
+            }
+
+            renderMenu() {
+                const list = document.getElementById('menu-list');
+                list.innerHTML = '';
+                this.menuItems.forEach(item => {
+                    list.innerHTML += `
+                        <div class="menu-item">
+                            <h4>${item.name}</h4>
+                            <p style="font-size:12px; opacity:0.8">${item.type}</p>
+                            <p class="price">${item.price}</p>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        // INSTANSIASI OBJEK
+        const db = new Database();
+        const ui = new UI();
+        const auth = new Auth(db);
+
+    </script>
+</body>
+</html>
